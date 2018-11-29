@@ -1,0 +1,116 @@
+clc, clear all, format long
+% Points
+% P1: LoLL connection with height actuator (s1)
+% P2: Zipper top connection with pitch actuator (s2)
+% P3: Zipper tip (bottom end of L3)
+% O : Origin and what everything is based off
+% C : Connection point of LiLL and Zipper
+
+% Lengths
+L0=40;          % Frame length
+L1=40;          % Long Leg of L bar (LoLL)
+L2=20;          % Placement of height actuactor (s1) along Frame
+L3=10;          % Length of zipper from P2 to P3
+L4=4;           % Little Leg of L bar (LiLL)
+c=3;            % used for L3/c, the distance P2 to C
+
+% Radial
+r1=20;          % Distance to P1
+r4=32;          % Connection of height actuator on LoLL
+
+% Actuators
+s1=7;           % Height
+s2=7;           % Pitch
+
+% Calculations
+% Theta > O
+% Gamma > G
+
+% P1
+r1=r1;
+O1=acosd((r1^2+L2^2-s1^2)/(2*r1*L2));
+
+% P2
+L5=L1-r4;                                       % Distance from s1 connection on LoLL to end of LoLL
+L6=sqrt(L4^2+L5^2);                             % Distance from s1 sonnection on LoLL to tip of LiLL
+alpha=acosd((s2^2+L6^2-(L3/c)^2)/(2*s2*L6));    % Angle made by L6 and s1
+beta=asind(L4/L6);                              % Angle made by L4 and L6
+O4=abs(alpha-beta);                             % Angle made by s2 and L1
+h=abs(s2*sind(O4));
+G1=abs(atand(h/(r4+s2*cosd(O4))));
+
+r2=(h/sind(G1)+sqrt(s2^2+r4^2-2*s2*r4*cosd(180-O4)))/2; % I used two methods to calculate this, both giving the same result so they're averaged
+O2=O1+G1;
+
+% P3
+
+% I've narrowed it down to this variable Phi
+% One uses Law of Sines, the other uses Law of Cosines to solve for  Phi
+% Both give completely different angles, but peculiarly they both add up
+% to 180 (phi+phi2=180)
+phi=acosd((s2^2+(L3/c)^2-L6^2)/(2*s2*L3/c));
+phi2=asind(L6*sind(alpha)*c/L3);
+phisum=phi+phi2; %Always comes out to 180 for some reason
+% My main theory is that since this angle relies on the placement of r3,
+% which has not yet been placed until after this angle, the angle
+% "guesses" the placement. It would also explain why changing s2
+% gives a chaotic response.
+
+psi=(asind(r4*sind(G1)/s2)+(O4-G1))/2; % I used two methods to calculate this, both giving the same result so they're averaged
+ELFF=phi+psi;
+r3=sqrt(r2^2+L3^2-2*r2*L3*cosd(ELFF));
+G2=asind(L3*sind(ELFF)/r3);
+
+r3=r3;
+O3=O1-(G2-G1);
+
+% Plotting
+close all
+hold on, grid on
+axis([-3 L0+5 -7 r2*sind(O2)+5])
+
+% Points O,1,2,3,& C
+x0=0;
+y0=0;
+
+x1=r1*cosd(O1);
+y1=r1*sind(O1);
+
+x2=r2*cosd(O2);
+y2=r2*sind(O2);
+
+x3=r3*cosd(O3);
+y3=r3*sind(O3);
+
+Cx=L1*cosd(O1)+L4*cosd(90-O1);
+Cy=L1*sind(O1)-L4*sind(90-O1);
+
+plot(x0,y0,'ob',x1,y1,'or',x2,y2,'ok',x3,y3,'o',Cx,Cy,'og')
+
+% Structure
+Framex=[x0 L0];
+Framey=[y0 y0];
+
+LoLLx=[x0 L1*cosd(O1)];
+LoLLy=[y0 L1*sind(O1)];
+
+LiLLx=[L1*cosd(O1) Cx];
+LiLLy=[L1*sind(O1) Cy];
+
+Zipperx=[x2 x3];
+Zippery=[y2 y3];
+
+plot(Framex,Framey,'b',LoLLx,LoLLy,'r',LiLLx,LiLLy,'r',Zipperx,Zippery,'g')
+
+% Actuators
+H_Actx=[x1 L2];
+H_Acty=[y1 0];
+
+P_Actx=[r4*cosd(O1) x2];
+P_Acty=[r4*sind(O1) y2];
+
+plot(H_Actx,H_Acty,'k-.',P_Actx,P_Acty,'k')
+
+legend('Origin','Point 1','Point 2','Point 3','Center','Frame','L-bar (Long Leg)','L-bar (Little Leg)','Zipper','Height Actuator','Pitch Actuator','Location','northwest')
+
+xlabel('x-axis'),ylabel('y-axis'), title('Static Model')
